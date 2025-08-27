@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Benim Basit Sitem</title>
+  <meta name="description" content="Sadece yazı içeren çok basit bir web sayfası." />
+  <style>
+    /* Basit ve okunaklı bir tipografi */
+    :root { --fg:#111; --bg:#fff; --muted:#666; }
+    @media (prefers-color-scheme: dark) {
+      :root { --fg:#eaeaea; --bg:#0b0b0b; --muted:#9a9a9a; }
+    }
+    html,body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      line-height: 1.7;
+      color: var(--fg);
+      background: var(--bg);
+    }
+    .wrap {
+      max-width: 800px;   /* satır uzunluğunu sınırlayarak okunabilirlik sağlar */
+      margin: 0 auto;
+      padding: 4rem 1.25rem;
+    }
+    h1, h2, h3 { line-height: 1.2; margin: 0 0 .5rem; }
+    p { margin: 0 0 1rem; }
+    header { margin-bottom: 2rem; }
+    .muted { color: var(--muted); }
+    /* İsteğe bağlı küçük bir alt bilgi */
+    footer { margin-top: 3rem; font-size: .9rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>Merhaba 👋</h1>
+      <p class="muted">Bu sayfa sadece yazı için tasarlandı. Başlığı ve metinleri kendinize göre düzenleyin.</p>
+    </header>
+
+    <!-- Buradan itibaren yazınızı ekleyin -->
+    <h2>Başlık</h2>
+    <p>
+      Buraya metninizi yazın. Paragrafları <code>&lt;p&gt;</code> etiketleriyle ayırabilirsiniz. 
+      Kalın <strong>metin</strong>, italik <em>metin</em> ve bağlantı <a href="#">örneği</a> hazır.
+    </p>
+    <p>
+      Yeni satırları gerektiği kadar ekleyin. Sayfa mobil ve masaüstünde rahat okunur.
+    </p>
+
+    <h3>Kısa Liste</h3>
+    <ul>
+      <li>Basit</li>
+      <li>Hızlı</li>
+      <li>Sadece yazı</li>
+    </ul>
+
+    <footer>
+      © <span id="yil"></span> Benim Basit Sitem
+    </footer>
+  </main>
+
+  <script>
+    // Otomatik yıl güncelleme
+    document.getElementById('yil').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
