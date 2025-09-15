@@ -1,11 +1,234 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Peachicot</title>
-  </head>
-  <body>
-    <h1> Servus 👋 Peachicot çalışıyor!</h1>
-  </body>
-</html>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Peach Hunter 🍑 | peachicot</title>
+  <style>
+    :root{
+      --bg:#fff7f3;
+      --card:#ffffff;
+      --accent:#ff915a;
+      --accent-2:#ffbd8a;
+      --ink:#2b2b2b;
+      --good:#22c55e;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 50% -100px,#ffe7dc,transparent) var(--bg);
+      color:var(--ink);
+      -webkit-tap-highlight-color: transparent;
+      user-select:none;
+    }
+    .wrap{
+      max-width:900px;margin:24px auto;padding:16px;
+    }
+    header{
+      display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap
+    }
+    h1{margin:0;font-size:clamp(22px,3.4vw,32px)}
+    .pill{
+      background:#fff;border:1px solid #eee;border-radius:999px;
+      padding:10px 14px;display:flex;gap:16px;align-items:center;box-shadow:0 6px 20px rgba(0,0,0,.05)
+    }
+    .pill b{font-size:18px}
+    .btn{
+      appearance:none;border:0;border-radius:12px;padding:12px 18px;
+      background:linear-gradient(180deg,var(--accent),#ff7c3c);
+      color:#fff;font-weight:700;cursor:pointer;box-shadow:0 10px 24px rgba(255,145,90,.35);
+      transition:transform .06s ease, filter .2s ease;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn[disabled]{filter:grayscale(.4);opacity:.7;pointer-events:none}
+    .board{
+      position:relative;margin-top:16px;height:min(70vh,520px);
+      background: linear-gradient(160deg,#fff,#fff7f3);
+      border:1px solid #f1e5dd;border-radius:16px;overflow:hidden;
+      box-shadow: inset 0 0 0 1px #f6ece6, 0 12px 40px rgba(0,0,0,.06);
+    }
+    .peach{
+      position:absolute; font-size: clamp(26px, 4.8vw, 48px); line-height:1;
+      cursor:pointer; transform:translate(-50%,-50%) scale(0.8);
+      transition: transform .12s ease, filter .12s ease, opacity .12s ease;
+      will-change: transform, opacity;
+      text-shadow: 0 2px 0 rgba(0,0,0,.08);
+    }
+    .peach:hover{transform:translate(-50%,-50%) scale(.95)}
+    .pop{animation:pop .28s ease forwards}
+    @keyframes pop{
+      0%{transform:translate(-50%,-50%) scale(.9); opacity:.3}
+      60%{transform:translate(-50%,-50%) scale(1.15); opacity:1}
+      100%{transform:translate(-50%,-50%) scale(1)}
+    }
+    .toast{
+      position:absolute;left:50%;top:14px;transform:translateX(-50%);
+      background:#fff;border:1px solid #f0e3db;border-radius:999px;padding:6px 12px;
+      font-weight:700;color:#ff6a2a;box-shadow:0 8px 24px rgba(0,0,0,.08);
+      opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;
+    }
+    .toast.show{opacity:1;transform:translate(-50%,6px)}
+    footer{margin-top:10px;opacity:.7;font-size:13px;text-align:center}
+    .bar{
+      display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap
+    }
+    .range{accent-color:var(--accent)}
+    .badge{
+      padding:6px 10px;border-radius:10px;background:#fff;border:1px solid #f2e6dd
+    }
+    .hi{color:var(--good);font-weight:800}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Peach Hunter 🍑</h1>
+      <div class="pill">
+        <div>Skor: <b id="score">0</b></div>
+        <div>En Yüksek: <b id="best">0</b></div>
+        <div>Süre: <b id="time">30</b>s</div>
+        <button id="start" class="btn">Başlat</button>
+      </div>
+    </header>
 
+    <div class="bar">
+      <span class="badge">Zorluk</span>
+      <input id="difficulty" class="range" type="range" min="1" max="3" step="1" value="2"
+        title="Zorluk: 1 kolay, 3 zor" />
+      <span id="diffLabel" class="badge">Orta</span>
+      <span class="badge">İpucu: 🍑’lere tıkla, hızlı tıklarsan <span class="hi">kombo</span> alırsın!</span>
+    </div>
+
+    <div id="board" class="board" aria-label="Oyun alanı" role="application" tabindex="0"></div>
+    <div id="toast" class="toast">Kombo x2!</div>
+
+    <footer>Made for <strong>peachicot.com</strong> · Saf HTML/CSS/JS · Mobil uyumlu</footer>
+  </div>
+
+  <script>
+    // --- basit oyun motoru ---
+    const $ = (s) => document.querySelector(s);
+    const board = $('#board');
+    const scoreEl = $('#score');
+    const bestEl = $('#best');
+    const timeEl = $('#time');
+    const startBtn = $('#start');
+    const toast = $('#toast');
+    const diff = $('#difficulty');
+    const diffLabel = $('#diffLabel');
+
+    const DIFF_TEXT = {1:'Kolay', 2:'Orta', 3:'Zor'};
+    let running = false, score = 0, timeLeft = 30, tickTimer, spawnTimer, lastHit = 0, combo = 1;
+
+    // yüksek skor
+    bestEl.textContent = Number(localStorage.getItem('peach-best')||0);
+
+    function setDifficultyLabel(){
+      diffLabel.textContent = DIFF_TEXT[diff.value];
+    }
+    setDifficultyLabel();
+    diff.addEventListener('input', setDifficultyLabel);
+
+    function rand(min, max){ return Math.random()*(max-min)+min }
+    function spawnPeach(){
+      if(!running) return;
+      const p = document.createElement('span');
+      p.className = 'peach pop';
+      p.textContent = '🍑';
+      // Güvenli alan (kenarlara yapışmasın)
+      const pad = 32;
+      const x = rand(pad, board.clientWidth - pad);
+      const y = rand(pad, board.clientHeight - pad);
+      p.style.left = x+'px';
+      p.style.top = y+'px';
+
+      p.dataset.birth = performance.now();
+      p.addEventListener('pointerdown', hitPeach, {once:true});
+      board.appendChild(p);
+
+      // kaybolma süresi zorluğa göre
+      const life = ({1:1500, 2:1100, 3:800})[diff.value];
+      setTimeout(()=> p.remove(), life);
+
+      // bir sonraki doğum: skor ve zorluğa göre hızlanır
+      const base = ({1:650, 2:480, 3:360})[diff.value];
+      const accel = Math.max(110, base - score*6);
+      spawnTimer = setTimeout(spawnPeach, accel);
+    }
+
+    function hitPeach(e){
+      const now = performance.now();
+      // 350ms içinde zincirlenirse kombo artar (2x, 3x... max 5x)
+      combo = (now - lastHit < 350) ? Math.min(combo+1, 5) : 1;
+      lastHit = now;
+
+      const gain = 1 * combo;
+      score += gain;
+      scoreEl.textContent = score;
+
+      // görsel geri bildirim
+      const el = e.currentTarget;
+      el.style.transform = 'translate(-50%,-50%) scale(1.25)';
+      el.style.opacity = '.2';
+      setTimeout(()=> el.remove(), 60);
+
+      // toast
+      if(combo > 1){
+        toast.textContent = `Kombo x${combo}! +${gain}`;
+        toast.classList.add('show');
+        setTimeout(()=>toast.classList.remove('show'), 320);
+      }
+    }
+
+    function tick(){
+      if(!running) return;
+      timeLeft--; timeEl.textContent = timeLeft;
+      if(timeLeft <= 0){ end(); }
+    }
+
+    function start(){
+      if(running) return;
+      // reset
+      running = true; score = 0; combo = 1; lastHit = 0;
+      timeLeft = 30; scoreEl.textContent = 0; timeEl.textContent = timeLeft;
+      startBtn.textContent = 'Devam Ediyor'; startBtn.disabled = true;
+      board.innerHTML = '';
+      // döngüler
+      tickTimer = setInterval(tick, 1000);
+      spawnPeach();
+      board.focus();
+    }
+
+    function end(){
+      running = false;
+      clearInterval(tickTimer); clearTimeout(spawnTimer);
+      startBtn.textContent = 'Tekrar Oyna'; startBtn.disabled = false;
+      // en iyi skor
+      const best = Number(localStorage.getItem('peach-best')||0);
+      if(score > best){ localStorage.setItem('peach-best', score); bestEl.textContent = score; }
+      // sonuç rozeti
+      const tag = document.createElement('div');
+      tag.className = 'toast show';
+      tag.style.top = 'auto'; tag.style.bottom = '14px';
+      tag.innerHTML = `Oyun bitti! Skorun <b>${score}</b> 🎉`;
+      board.appendChild(tag);
+      setTimeout(()=> tag.remove(), 1800);
+    }
+
+    startBtn.addEventListener('click', start);
+    // boşluk tuşu ile başlat/tekrar
+    window.addEventListener('keydown', (e)=>{
+      if(e.code==='Space'){ e.preventDefault(); if(!running) start(); }
+    }, {passive:false});
+
+    // erişilebilirlik: odak alınca ipucu
+    board.addEventListener('focus', ()=>{
+      toast.textContent = 'Başlamak için Space veya “Başlat”';
+      toast.classList.add('show');
+      setTimeout(()=>toast.classList.remove('show'), 1000);
+    });
+  </script>
+</body>
+</html>
