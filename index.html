@@ -232,3 +232,27 @@
   </script>
 </body>
 </html>
+
+
+<div id="info-bar" style="margin:20px auto; text-align:center; font-size:18px;">
+  ⏰ Saat: <span id="clock"></span> | 👆 Tıklamalar: <span id="clicks">0</span>
+</div>
+
+<script>
+  // --- Saat ---
+  function updateClock() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('tr-TR'); // Türkçe saat formatı
+    document.getElementById('clock').textContent = timeString;
+  }
+  setInterval(updateClock, 1000);
+  updateClock(); // hemen başlat
+
+  // --- Tıklama Sayacı ---
+  let clickCount = 0;
+  document.body.addEventListener('click', () => {
+    clickCount++;
+    document.getElementById('clicks').textContent = clickCount;
+  });
+</script>
+
